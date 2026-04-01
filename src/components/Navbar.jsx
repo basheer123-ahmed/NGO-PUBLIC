@@ -1,19 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Heart, Lock } from 'lucide-react';
+import { Menu, X, Heart, Lock, LayoutDashboard } from 'lucide-react';
+import { mockAuth } from '../mockApi';
 
 const Navbar = ({ onDonateClick }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [session, setSession] = useState(null);
   const location = useLocation();
 
+  useEffect(() => {
+    // Mission Protocol: Real-time Session Sync
+    const currentSession = mockAuth.getSession();
+    setSession(currentSession);
+  }, [location]);
+
   const navLinks = [
-    { name: 'Home', path: '/' },
+    { name: 'Home', path: '/home' },
     { name: 'About', path: '/about' },
     { name: 'Works', path: '/works' },
     { name: 'Volunteer', path: '/volunteer' },
     { name: 'Gallery', path: '/gallery' },
     { name: 'Contact', path: '/contact' },
   ];
+
+  const getDashboardPath = () => {
+    if (!session) return '/login';
+    if (session.role === 'admin' && session.email === 'basha@gmail.com') return '/admin-dashboard';
+    if (session.role === 'officer') return '/officer-dashboard';
+    return '/user-dashboard';
+  };
 
   const isActive = (path) => location.pathname === path;
 
@@ -22,24 +37,24 @@ const Navbar = ({ onDonateClick }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="p-2 bg-green-600 rounded-lg">
+            <Link to="/home" className="flex items-center space-x-2 group">
+              <div className="p-2 bg-green-600 rounded-lg group-hover:rotate-12 transition-transform">
                 <Heart className="h-8 w-8 text-white fill-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900 hidden sm:block">
+              <span className="text-xl font-bold text-gray-900 hidden sm:block uppercase tracking-tighter italic">
                 SUN <span className="text-green-600">NGO</span>
               </span>
             </Link>
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <div className="flex items-center space-x-6 mr-6">
+            <div className="flex items-center space-x-6 mr-6 uppercase text-[10px] font-black tracking-widest">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-sm font-medium transition-colors hover:text-green-600 ${
-                    isActive(link.path) ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-600'
+                  className={`transition-colors hover:text-green-600 ${
+                    isActive(link.path) ? 'text-green-600 border-b-2 border-green-600 pb-1' : 'text-gray-500'
                   }`}
                 >
                   {link.name}
@@ -48,14 +63,18 @@ const Navbar = ({ onDonateClick }) => {
             </div>
             <div className="flex items-center space-x-3">
               <Link
-                to="/admin-login"
-                className="flex items-center bg-gray-950 text-white px-5 py-2 rounded-full text-sm font-bold hover:bg-black transition duration-300 shadow-lg"
+                to={getDashboardPath()}
+                className="flex items-center bg-gray-950 text-white px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-green-600 transition-all shadow-xl shadow-gray-200"
               >
-                <Lock className="w-3.5 h-3.5 mr-2" /> Admin Portal
+                {session ? (
+                  <><LayoutDashboard className="w-3.5 h-3.5 mr-2" /> My Dashboard</>
+                ) : (
+                  <><Lock className="w-3.5 h-3.5 mr-2" /> Admin Portal</>
+                )}
               </Link>
               <button
                 onClick={onDonateClick}
-                className="bg-green-600 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-green-700 transition duration-300 shadow-lg shadow-green-200"
+                className="bg-green-600 text-white px-7 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition-all shadow-xl shadow-green-100"
               >
                 Donate Now
               </button>
@@ -76,33 +95,33 @@ const Navbar = ({ onDonateClick }) => {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden bg-white/95 border-b border-gray-100 animate-in slide-in-from-top duration-300">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+          <div className="px-4 pt-4 pb-8 space-y-3">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 onClick={() => setIsOpen(false)}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  isActive(link.path) ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50'
+                className={`block px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest ${
+                  isActive(link.path) ? 'bg-green-50 text-green-600' : 'text-gray-500 hover:bg-gray-50'
                 }`}
               >
                 {link.name}
               </Link>
             ))}
-            <div className="pt-4 space-y-3">
+            <div className="pt-6 space-y-3">
               <Link
-                to="/admin-login"
+                to={getDashboardPath()}
                 onClick={() => setIsOpen(false)}
-                className="w-full flex items-center justify-center bg-gray-950 text-white px-6 py-3 rounded-lg font-bold hover:bg-black transition duration-300"
+                className="w-full flex items-center justify-center bg-gray-950 text-white px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-green-600 transition-all"
               >
-                <Lock className="w-4 h-4 mr-2" /> Admin Portal
+                <LayoutDashboard className="w-4 h-4 mr-2" /> {session ? 'My Dashboard' : 'Admin Portal'}
               </Link>
               <button
                 onClick={() => {
-                  onDonateClick();
                   setIsOpen(false);
+                  onDonateClick();
                 }}
-                className="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700 shadow-lg shadow-green-100"
+                className="w-full bg-green-600 text-white px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition-all shadow-xl shadow-green-100"
               >
                 Donate Now
               </button>
